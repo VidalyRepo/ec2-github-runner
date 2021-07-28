@@ -9,6 +9,12 @@ async function startEc2Instance(label, githubRegistrationToken) {
   // Docker and git are necessary for GitHub runner and should be pre-installed on the AMI.
   const userData = [
     '#!/bin/bash',
+    'mkfs -t xfs /dev/nvme0n1 && sudo mkdir data && sudo mount /dev/nvme0n1 data && mkdir data/docker',
+    'cd data',
+    'systemctl stop docker',
+    'echo \'{"data-root": "/data/docker"}\' >> /etc/docker/daemon.json',
+    'rsync -aqxP /var/lib/docker/ /data/docker',
+    'systemctl start docker',
     'mkdir actions-runner && cd actions-runner',
     'case $(uname -m) in aarch64) ARCH="arm64" ;; amd64|x86_64) ARCH="x64" ;; esac && export RUNNER_ARCH=${ARCH}',
     'curl -O -L https://github.com/actions/runner/releases/download/v2.278.0/actions-runner-linux-${RUNNER_ARCH}-2.278.0.tar.gz',
